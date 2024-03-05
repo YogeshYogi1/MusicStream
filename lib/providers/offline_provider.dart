@@ -7,7 +7,7 @@ import '../utils/app_audio_query.dart';
 import '../utils/app_permission.dart';
 import '../utils/audio_manager.dart';
 
-class UiProvider extends ChangeNotifier {
+class OfflineProvider extends ChangeNotifier {
   List<SongModelImg> songDataList = [];
   AppPermissionHandler appPermissionHandler = AppPermissionHandler();
   AppAudioQuery appAudioQuery = AppAudioQuery();

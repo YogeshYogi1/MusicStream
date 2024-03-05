@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../Models/song_model_img.dart';
 import '../components/constants.dart';
-import '../providers/ui_provider.dart';
+import '../providers/offline_provider.dart';
 
 class MusicScreen extends StatefulWidget {
   final SongModelImg songModelImg;
@@ -17,11 +17,11 @@ class MusicScreen extends StatefulWidget {
 
 class _MusicScreenState extends State<MusicScreen> {
   String endTime = '';
-  late UiProvider uiProvider;
+  late OfflineProvider offlineProvider;
   @override
   void initState() {
     endTime = widget.songModelImg.songModel.duration.toString();
-    uiProvider = Provider.of<UiProvider>(context, listen: false);
+    offlineProvider = Provider.of<OfflineProvider>(context, listen: false);
     super.initState();
   }
 
@@ -70,7 +70,7 @@ class _MusicScreenState extends State<MusicScreen> {
                           padding: const EdgeInsets.only(right: 25),
                           child: IconButton(
                             onPressed: () {
-                              uiProvider.playPreviousSong();
+                              offlineProvider.playPreviousSong();
                             },
                             icon: const Icon(
                               Icons.skip_previous,
@@ -81,21 +81,21 @@ class _MusicScreenState extends State<MusicScreen> {
                         ),
                         StreamBuilder(
                           stream:
-                              uiProvider.audioPlayerManager.playerStateStream,
+                              offlineProvider.audioPlayerManager.playerStateStream,
                           builder: (context, snapshot) {
                             if (snapshot.hasData) {
                               if (snapshot.data!.processingState ==
                                   ProcessingState.completed) {
-                                uiProvider.playNextSong();
+                                offlineProvider.playNextSong();
                               }
                               return IconButton(
                                 onPressed: () {
                                   showLog(snapshot.data!.playing.toString());
                                   if (snapshot.data!.playing) {
-                                    uiProvider.playPauseSong();
+                                    offlineProvider.playPauseSong();
                                   } else {
-                                    uiProvider.playSong(
-                                        index: uiProvider.songIndex);
+                                    offlineProvider.playSong(
+                                        index: offlineProvider.songIndex);
                                   }
                                 },
                                 icon: Icon(
@@ -116,7 +116,7 @@ class _MusicScreenState extends State<MusicScreen> {
                           padding: const EdgeInsets.only(left: 25),
                           child: IconButton(
                             onPressed: () {
-                              uiProvider.playNextSong();
+                              offlineProvider.playNextSong();
                             },
                             icon: const Icon(
                               Icons.skip_next,
@@ -154,8 +154,8 @@ class _MusicScreenState extends State<MusicScreen> {
               width: size.width,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: uiProvider.songDataList.length ?? 0,
-                itemBuilder: (context, index) => Consumer<UiProvider>(
+                itemCount: offlineProvider.songDataList.length ?? 0,
+                itemBuilder: (context, index) => Consumer<OfflineProvider>(
                   builder: (context, value, child) => Container(
                     height: 70,
                     width: 80,
@@ -164,7 +164,7 @@ class _MusicScreenState extends State<MusicScreen> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: uiProvider.songDataList[index].image == null
+                    child: offlineProvider.songDataList[index].image == null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: Image.asset(
@@ -175,7 +175,7 @@ class _MusicScreenState extends State<MusicScreen> {
                         : ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: Image.memory(
-                              uiProvider.songDataList[index].image!,
+                              offlineProvider.songDataList[index].image!,
                               fit: BoxFit.fill,
                             ),
                           ),
@@ -189,8 +189,8 @@ class _MusicScreenState extends State<MusicScreen> {
     );
   }
 
-  Consumer<UiProvider> songProgress() {
-    return Consumer<UiProvider>(
+  Consumer<OfflineProvider> songProgress() {
+    return Consumer<OfflineProvider>(
       builder: (context, provider, child) {
         return Row(
           children: [
@@ -219,7 +219,7 @@ class _MusicScreenState extends State<MusicScreen> {
                 stream: provider.audioPlayerManager.positionStream,
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    final max = uiProvider.audioPlayerManager.audioPlayer
+                    final max = offlineProvider.audioPlayerManager.audioPlayer
                             .duration?.inMilliseconds ??
                         30000;
                     final current = snapshot.data!.inMilliseconds;
@@ -242,7 +242,7 @@ class _MusicScreenState extends State<MusicScreen> {
                 },
               ),
             ),
-            Consumer<UiProvider>(builder: (context, value, child) {
+            Consumer<OfflineProvider>(builder: (context, value, child) {
               final snapshot = provider.songDuration;
               var formattedTime = '';
               if (snapshot != null) {
@@ -266,9 +266,9 @@ class _MusicScreenState extends State<MusicScreen> {
       padding: const EdgeInsets.only(bottom: 15),
       child: SizedBox(
         height: 20,
-        child: Consumer<UiProvider>(
+        child: Consumer<OfflineProvider>(
           builder: (context, value, child) => Text(
-            value.songDataList[uiProvider.songIndex].songModel.artist
+            value.songDataList[offlineProvider.songIndex].songModel.artist
                 .toString(),
             style: kTextStyleBasic,
             textAlign: TextAlign.center,
@@ -285,9 +285,9 @@ class _MusicScreenState extends State<MusicScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
       child: SizedBox(
         height: 45,
-        child: Consumer<UiProvider>(
+        child: Consumer<OfflineProvider>(
           builder: (context, value, child) => Text(
-            value.songDataList[uiProvider.songIndex].songModel.title.toString(),
+            value.songDataList[offlineProvider.songIndex].songModel.title.toString(),
             style: kTextStyleBasic,
             textAlign: TextAlign.center,
             maxLines: 2,
@@ -298,8 +298,8 @@ class _MusicScreenState extends State<MusicScreen> {
     );
   }
 
-  Consumer<UiProvider> coverImage() {
-    return Consumer<UiProvider>(
+  Consumer<OfflineProvider> coverImage() {
+    return Consumer<OfflineProvider>(
       builder: (context, value, child) => Container(
         height: 250,
         width: 250,
@@ -368,7 +368,7 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Widget backgroundImg() {
-    return Consumer<UiProvider>(
+    return Consumer<OfflineProvider>(
       builder: (context, value, child) {
         return SizedBox(
           height: double.maxFinite,

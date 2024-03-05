@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:music_stream/providers/ui_provider.dart';
+import 'package:music_stream/providers/offline_provider.dart';
 import 'package:music_stream/screens/music_list_screen.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider (create: (_) => UiProvider()),
+        ChangeNotifierProvider (create: (_) => OfflineProvider()),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',
@@ -27,88 +27,8 @@ class MyApp extends StatelessWidget {
         ),
         home:
         const MusicListScreen(),
-     // const MyHomePage(title: 'Flutter Demo Home Page'),
       ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final OnAudioQuery _audioQuery = OnAudioQuery();
-
-  AudioPlayer player = AudioPlayer();
-  Future<void> methods(String url)async{
-   await player.setUrl(url);
-  }
-
-  @override
-  void initState() {
-    Permission.storage.request();
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              'Music Name',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: ()async{
-              await player.setUrl('https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav');
-              await player.play();
-             /* List<SongModel> query = await  _audioQuery.querySongs();
-              await methods(query[0].data);
-              await player.play();*/
-            },
-            tooltip: 'Increment',
-            child: const Icon(Icons.add),
-          ),
-          FloatingActionButton(
-            onPressed: ()async{
-              List<SongModel> query = await  _audioQuery.querySongs();
-              await methods(query[0].data);
-              await player.pause();
-            },
-            tooltip: 'Decrement',
-            child: const Icon(Icons.add),
-          ),
-          FloatingActionButton(
-            onPressed: ()async{
-              await player.setVolume(0.1);
-            },
-            tooltip: 'Decrement',
-            child: const Icon(Icons.add),
-          ),
-        ],
-      ),
-    );
-  }
-}

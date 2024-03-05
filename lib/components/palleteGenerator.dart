@@ -35,7 +35,6 @@ class ImageColorExtractor {
         colors.addAll(paletteGenerator.colors);
       }
     } catch (e) {
-      // Handle errors, e.g., if the image is not found or cannot be decoded
       print('Error extracting colors: $e');
     }
 

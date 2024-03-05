@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:music_stream/Models/song_model_img.dart';
 import 'package:music_stream/components/widgets.dart';
-import 'package:music_stream/providers/ui_provider.dart';
+import 'package:music_stream/providers/offline_provider.dart';
 import 'package:music_stream/screens/music_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -22,14 +22,14 @@ class _MusicListScreenState extends State<MusicListScreen> {
   ValueNotifier<double> categoryHeight = ValueNotifier(50);
   final ValueNotifier<double> _fontSize = ValueNotifier(20);
   ValueNotifier<double> miniPlayerHeight = ValueNotifier(80);
-  late UiProvider uiProvider;
+  late OfflineProvider offlineProvider;
 
   @override
   void initState() {
     super.initState();
-    uiProvider = Provider.of<UiProvider>(context, listen: false);
-    uiProvider.getSongsList(showDialoge: _showingDialog);
-    uiProvider.updateBackGroundImage();
+    offlineProvider = Provider.of<OfflineProvider>(context, listen: false);
+    offlineProvider.getSongsList(showDialoge: _showingDialog);
+    offlineProvider.updateBackGroundImage();
     _scrollController = ScrollController();
     sizeControlling();
   }
@@ -99,7 +99,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                           MaterialPageRoute(
                             builder: (context) {
                               return MusicScreen(
-                                songModelImg: uiProvider.songDataList[0],
+                                songModelImg: offlineProvider.songDataList[0],
                               );
                             },
                           ),
@@ -108,7 +108,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                       child: ValueListenableBuilder(
                           valueListenable: streamPlayerHeight,
                           builder: (context, value, child) {
-                            return Consumer<UiProvider>(
+                            return Consumer<OfflineProvider>(
                               builder: (context, color, child) => Container(
                                 height: streamPlayerHeight.value,
                                 width: double.maxFinite,
@@ -179,9 +179,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
                         blurValue: 20,
                         color: Colors.black,
                         isTopRadiusOnly: true,
-                        child: Consumer<UiProvider>(
+                        child: Consumer<OfflineProvider>(
                           builder: (context, value, child) {
-                            return uiProvider.songDataList.isNotEmpty
+                            return offlineProvider.songDataList.isNotEmpty
                                 ? ListView.builder(
                                     itemCount: value.songDataList.length,
                                     controller: _scrollController,
@@ -234,11 +234,11 @@ class _MusicListScreenState extends State<MusicListScreen> {
               child: ValueListenableBuilder(
                 valueListenable: miniPlayerHeight,
                 builder: (context, containerHeight, child) =>
-                    Consumer<UiProvider>(
+                    Consumer<OfflineProvider>(
                   builder: (context, value, child) {
                     int songIndex = value.songIndex;
 
-                    return uiProvider.songDataList.isNotEmpty
+                    return offlineProvider.songDataList.isNotEmpty
                         ? StreamBuilder(
                             stream: value.audioPlayerManager.positionStream,
                             builder: (context, snapshot) => MiniPlayerView(
@@ -358,7 +358,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
   }
 
   Widget backgroundImg() {
-    return Consumer<UiProvider>(
+    return Consumer<OfflineProvider>(
       builder: (context, value, child) {
         return Container(
           decoration: BoxDecoration(
