@@ -1,16 +1,12 @@
-import 'dart:ffi';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:music_stream/Models/song_model_img.dart';
 import 'package:music_stream/components/widgets.dart';
 import 'package:music_stream/providers/ui_provider.dart';
-import 'package:music_stream/utils/app_audio_query.dart';
-import 'package:music_stream/utils/app_permission.dart';
-import 'package:music_stream/utils/audio_manager.dart';
+import 'package:music_stream/screens/music_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import '../Models/song_model_img.dart';
 import '../components/constants.dart';
-import '../components/palleteGenerator.dart';
 
 class MusicListScreen extends StatefulWidget {
   const MusicListScreen({super.key});
@@ -20,41 +16,37 @@ class MusicListScreen extends StatefulWidget {
 }
 
 class _MusicListScreenState extends State<MusicListScreen> {
-  AppPermissionHandler appPermissionHandler = AppPermissionHandler();
-  AppAudioQuery appAudioQuery = AppAudioQuery();
   Uint8List? bgImg;
-  int playingIndex =0 ;
-  List<SongModelImg> songDataList = [];
   late final ScrollController _scrollController;
-  AudioPlayerManager audioPlayerManager = AudioPlayerManager();
-
-  ValueNotifier<List<Color>> colors = ValueNotifier(
-      [Colors.black, Colors.black87, Colors.white70, Colors.black54]);
-  ValueNotifier<double> containerHeight = ValueNotifier(250);
+  ValueNotifier<double> streamPlayerHeight = ValueNotifier(250);
+  ValueNotifier<double> categoryHeight = ValueNotifier(50);
   final ValueNotifier<double> _fontSize = ValueNotifier(20);
-  ValueNotifier<double> containerMinHeight = ValueNotifier(80);
+  ValueNotifier<double> miniPlayerHeight = ValueNotifier(80);
+  late UiProvider uiProvider;
 
   @override
   void initState() {
     super.initState();
-    Provider.of<UiProvider>(context).updateColor();
+    uiProvider = Provider.of<UiProvider>(context, listen: false);
+    uiProvider.getSongsList(showDialoge: _showingDialog);
+    uiProvider.updateBackGroundImage();
     _scrollController = ScrollController();
     sizeControlling();
-    initialSetup();
-  }
-
-  initialSetup() async {
-    await appPermissionHandler.askPermission(showDialog: showingDialog);
-    songDataList = await appAudioQuery.getALlAudioList();
   }
 
   sizeControlling() {
     _scrollController.addListener(() {
-      containerHeight.value = 250.0 - _scrollController.offset;
-      _fontSize.value = 20.0 - _scrollController.offset / 6.0;
-      _fontSize.value = _fontSize.value.clamp(0.0, 20.0);
-      if (containerHeight.value < 80) {
-        containerHeight.value = 80.0;
+      if (_scrollController.offset <= 593) {
+        streamPlayerHeight.value = 250.0 - _scrollController.offset;
+        categoryHeight.value = 50 - _scrollController.offset;
+        _fontSize.value = 20.0 - _scrollController.offset / 6.0;
+        _fontSize.value = _fontSize.value.clamp(0.0, 20.0);
+        if (streamPlayerHeight.value < 80) {
+          streamPlayerHeight.value = 80.0;
+        }
+        if (categoryHeight.value <= 0) {
+          categoryHeight.value = 0;
+        }
       }
     });
   }
@@ -79,84 +71,102 @@ class _MusicListScreenState extends State<MusicListScreen> {
               Expanded(
                 child: Column(
                   children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 20),
-                      height: 35,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 13),
-                            child: titles('All'),
+                    ValueListenableBuilder(
+                      valueListenable: categoryHeight,
+                      builder: (context, value, child) {
+                        return Container(
+                          margin: const EdgeInsets.only(top: 0),
+                          height: value,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(left: 13),
+                                child: titles('All'),
+                              ),
+                              titles('Artist'),
+                              titles('Album'),
+                              titles('Genre'),
+                            ],
                           ),
-                          titles('Artist'),
-                          titles('Album'),
-                          titles('Genre'),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                     InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return MusicScreen(
+                                songModelImg: uiProvider.songDataList[0],
+                              );
+                            },
+                          ),
+                        );
+                      },
                       child: ValueListenableBuilder(
-                          valueListenable: containerHeight,
+                          valueListenable: streamPlayerHeight,
                           builder: (context, value, child) {
-                            return Container(
-                              height: containerHeight.value,
-                              width: double.maxFinite,
-                              margin: const EdgeInsets.only(
-                                  left: 13, right: 13, top: 13, bottom: 13),
-                              decoration: BoxDecoration(
-                                color: colors.value.length > 1
-                                    ? colors.value[0]
-                                    : null,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "Play With Friends While Working ",
-                                          style: kTextStyleBasic.copyWith(
-                                              fontSize: _fontSize.value),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        const Icon(
-                                          Icons.play_arrow_outlined,
-                                          size: 40,
-                                          color: Colors.white,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.person,
-                                          color: Colors.white,
-                                          size: _fontSize.value,
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 15),
-                                          child: Text(
-                                            'DeadPool is Playing ....',
+                            return Consumer<UiProvider>(
+                              builder: (context, color, child) => Container(
+                                height: streamPlayerHeight.value,
+                                width: double.maxFinite,
+                                margin: const EdgeInsets.only(
+                                    left: 13, right: 13, top: 13, bottom: 13),
+                                decoration: BoxDecoration(
+                                  color: color.appDynamicColor.length > 1
+                                      ? color.appDynamicColor[0]
+                                      : null,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Play With Friends While Working ",
                                             style: kTextStyleBasic.copyWith(
                                                 fontSize: _fontSize.value),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          const Icon(
+                                            Icons.play_arrow_outlined,
+                                            size: 40,
+                                            color: Colors.white,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: _fontSize.value,
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 15),
+                                            child: Text(
+                                              'DeadPool is Playing ....',
+                                              style: kTextStyleBasic.copyWith(
+                                                  fontSize: _fontSize.value),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           }),
@@ -169,34 +179,31 @@ class _MusicListScreenState extends State<MusicListScreen> {
                         blurValue: 20,
                         color: Colors.black,
                         isTopRadiusOnly: true,
-                        child: songDataList.isNotEmpty
-                            ? ListView.builder(
-                                itemCount: songDataList.length,
-                                controller: _scrollController,
-                                itemBuilder: (context, index) {
-                                  return SongTileCard(
-                                    songName: songDataList[index]
-                                        .songModel
-                                        .displayNameWOExt,
-                                    time: songDataList[index].songModel.artist.toString(),
-                                    songCoverImg: songDataList[index].image,
-                                    playButton: () {
-                                      setState(
-                                        () {
-                                          playingIndex = index;
-                                          bgImg = songDataList[index].image;
-                                         // updateColor();
+                        child: Consumer<UiProvider>(
+                          builder: (context, value, child) {
+                            return uiProvider.songDataList.isNotEmpty
+                                ? ListView.builder(
+                                    itemCount: value.songDataList.length,
+                                    controller: _scrollController,
+                                    padding: const EdgeInsets.only(bottom: 100),
+                                    itemBuilder: (context, index) {
+                                      final model = value.songDataList[index];
+                                      return SongTileCard(
+                                        songName:
+                                            model.songModel.displayNameWOExt,
+                                        time: model.songModel.artist.toString(),
+                                        songCoverImg: model.image,
+                                        playButton: () async {
+                                          await value.playSong(index: index);
                                         },
                                       );
-                                      audioPlayerManager.play(
-                                          songDataList[index].songModel.data);
                                     },
+                                  )
+                                : const Center(
+                                    child: CircularProgressIndicator(),
                                   );
-                                },
-                              )
-                            : const Center(
-                                child: CircularProgressIndicator(),
-                              ),
+                          },
+                        ),
                       ),
                     )
                   ],
@@ -210,59 +217,61 @@ class _MusicListScreenState extends State<MusicListScreen> {
             right: 0,
             child: GestureDetector(
               onVerticalDragUpdate: (details) {
-                containerMinHeight.value -= details.primaryDelta!.toDouble();
-                if (containerMinHeight.value < 80) {
-                  containerMinHeight.value = 80;
-                } else if (containerMinHeight.value > 250) {
-                  containerMinHeight.value = 250;
+                miniPlayerHeight.value -= details.primaryDelta!.toDouble();
+                if (miniPlayerHeight.value < 80) {
+                  miniPlayerHeight.value = 80;
+                } else if (miniPlayerHeight.value > 250) {
+                  miniPlayerHeight.value = 250;
                 }
               },
               onVerticalDragEnd: (details) {
-                if (containerMinHeight.value > 160) {
-                  containerMinHeight.value = 250;
+                if (miniPlayerHeight.value > 160) {
+                  miniPlayerHeight.value = 250;
                 } else {
-                  containerMinHeight.value = 80;
+                  miniPlayerHeight.value = 80;
                 }
               },
               child: ValueListenableBuilder(
-                valueListenable: containerMinHeight,
-                builder: (context, value, child) {
-                  return ValueListenableBuilder<List<Color>>(
-                    valueListenable: colors,
-                    builder: (context, color, child) {
-                      return MiniPlayerView(
-                        height: value,
-                        songName: songDataList[playingIndex].songModel.displayNameWOExt,
-                        time:songDataList[playingIndex].songModel.artist.toString(),
-                        songCoverImg: bgImg,
-                        bgColor: color.length > 1 ? color[0] : null,
-                        playButton: () {
-                          bgImg = songDataList[playingIndex].image;
-                         // updateColor();
-                          audioPlayerManager.play(songDataList[playingIndex].songModel.data);
-                        },
-                        nextButton: () {
+                valueListenable: miniPlayerHeight,
+                builder: (context, containerHeight, child) =>
+                    Consumer<UiProvider>(
+                  builder: (context, value, child) {
+                    int songIndex = value.songIndex;
 
-                          setState(() {
-                            playingIndex+=1;
-                          });
-                          bgImg = songDataList[playingIndex].image;
-                        //  updateColor();
-                          audioPlayerManager.play(songDataList[playingIndex].songModel.data);
-                        },
-                        previousButton: () {
-
-                          setState(() {
-                            playingIndex-=1;
-                          });
-                          bgImg = songDataList[playingIndex].image;
-                         // updateColor();
-                          audioPlayerManager.play(songDataList[playingIndex].songModel.data);
-                        },
-                      );
-                    },
-                  );
-                },
+                    return uiProvider.songDataList.isNotEmpty
+                        ? StreamBuilder(
+                            stream: value.audioPlayerManager.positionStream,
+                            builder: (context, snapshot) => MiniPlayerView(
+                              height: containerHeight,
+                              songName: value.songDataList[songIndex].songModel
+                                  .displayNameWOExt,
+                              time: value
+                                  .songDataList[songIndex].songModel.artist
+                                  .toString(),
+                              songCoverImg: value.songDataList[songIndex].image,
+                              bgColor: value.appDynamicColor.length > 1
+                                  ? value.appDynamicColor[0]
+                                  : null,
+                              playButton: () async {
+                                await value.playSong(
+                                  index: songIndex,
+                                );
+                              },
+                              nextButton: () async {
+                                await value.playNextSong();
+                              },
+                              previousButton: () async {
+                                await value.playPreviousSong();
+                              },
+                              playPauseIcon: kPlayIcon,
+                            ),
+                          )
+                        : Container(
+                            height: 80,
+                            color: Colors.black45,
+                          );
+                  },
+                ),
               ),
             ),
           ),
@@ -271,7 +280,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
     );
   }
 
-  showingDialog() {
+  _showingDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -321,23 +330,26 @@ class _MusicListScreenState extends State<MusicListScreen> {
     );
   }
 
-  SafeArea search() {
+  Widget search() {
     return SafeArea(
-      child: GlassMorphism(
-        start: 0.2,
-        end: 0.2,
-        bRadius: 20,
-        color: Colors.black,
-        child: Container(
-          height: 40,
-          width: double.maxFinite,
-          alignment: Alignment.bottomLeft,
-          child: IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.search,
-              size: 25,
-              color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        child: GlassMorphism(
+          start: 0.2,
+          end: 0.2,
+          bRadius: 20,
+          color: Colors.black,
+          child: Container(
+            height: 40,
+            width: double.maxFinite,
+            alignment: Alignment.bottomLeft,
+            child: IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.search,
+                size: 25,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -346,13 +358,12 @@ class _MusicListScreenState extends State<MusicListScreen> {
   }
 
   Widget backgroundImg() {
-    return ValueListenableBuilder<List<Color>>(
-      valueListenable: colors,
+    return Consumer<UiProvider>(
       builder: (context, value, child) {
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: value,
+              colors: value.appDynamicColor,
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
             ),
@@ -372,6 +383,7 @@ class MiniPlayerView extends StatelessWidget {
   final String time;
   final Uint8List? songCoverImg;
   final Color? bgColor;
+  final Widget playPauseIcon;
 
   const MiniPlayerView(
       {super.key,
@@ -382,7 +394,8 @@ class MiniPlayerView extends StatelessWidget {
       this.songCoverImg,
       this.bgColor = Colors.black,
       required this.nextButton,
-      required this.previousButton});
+      required this.previousButton,
+      required this.playPauseIcon});
 
   @override
   Widget build(BuildContext context) {
@@ -422,7 +435,7 @@ class MiniPlayerView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    songName +songName,
+                    songName + songName,
                     style: kTextStyleBasic,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -444,14 +457,7 @@ class MiniPlayerView extends StatelessWidget {
                 size: 30,
               ),
             ),
-            IconButton(
-              onPressed: playButton,
-              icon: const Icon(
-                Icons.play_circle_outline_rounded,
-                color: kwhiteColor,
-                size: 30,
-              ),
-            ),
+            IconButton(onPressed: playButton, icon: playPauseIcon),
             IconButton(
               onPressed: nextButton,
               icon: const Icon(
@@ -466,10 +472,3 @@ class MiniPlayerView extends StatelessWidget {
     );
   }
 }
-//echo "# MusicStream" >> README.md
-// git init
-// git add README.md
-// git commit -m "first commit"
-// git branch -M main
-// git remote add origin https://github.com/YogeshYogi1/MusicStream.git
-// git push -u origin main

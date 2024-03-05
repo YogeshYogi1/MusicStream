@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider (create: (_) => UiProvider()),
+        ChangeNotifierProvider (create: (_) => UiProvider()),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',
@@ -25,8 +25,9 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home: const MusicListScreen(),
-      //const MyHomePage(title: 'Flutter Demo Home Page'),
+        home:
+        const MusicListScreen(),
+     // const MyHomePage(title: 'Flutter Demo Home Page'),
       ),
     );
   }
@@ -81,9 +82,11 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           FloatingActionButton(
             onPressed: ()async{
-              List<SongModel> query = await  _audioQuery.querySongs();
-              await methods(query[0].data);
+              await player.setUrl('https://www2.cs.uic.edu/~i101/SoundFiles/BabyElephantWalk60.wav');
               await player.play();
+             /* List<SongModel> query = await  _audioQuery.querySongs();
+              await methods(query[0].data);
+              await player.play();*/
             },
             tooltip: 'Increment',
             child: const Icon(Icons.add),
